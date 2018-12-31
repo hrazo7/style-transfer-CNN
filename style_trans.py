@@ -1,5 +1,11 @@
+
 import numpy as np
 import time
+import tensorflow as tf
+import tensorflow.contrib.eager as tfe
+from tensorflow.python.keras import models 
+from tensorflow.python.keras import losses
+from tensorflow.python.keras import layers
 from PIL import Image
 from keras import backend as k
 from keras.preprocessing.image import load_img
@@ -59,7 +65,56 @@ num_style_layers = len(style_layers)
 
 def get_model():
 
+	vgg = tf.keras.applications.vgg19.VGG19(include_top=false, weights='imagenet')
+	vgg.trainable = false
+	style_outputs = [vgg.get_layers(name).output for name in style_layers]
+	content_outputs = [vgg.get_layer(name).outputs for name in content_layers]
+	model_outputs = style_outputs + content_outputs
+
+	return models.Model(vgg.input, model_outputs)
+
+def content_loss(base_content, target):
+
+	content_loss = tf.reduce_mean(tf.square(base_content - target))
 	
+	return content_loss
+
+def gram_matrix(input_tensor):
+
+	channels = int(input_tensor.shape[-1])
+	a = tf.reshape(input_tensor, [-1, channels])
+	n = tf.shape(a)[0]
+	gram = tf.matmul(a, a, transpose_a = True)
+	result = gram / tf.cast(n, tf.float32)
+	
+	return result
+
+def style_loss(base_style, gram_target):
+
+	height = base_style.get_shape().as_list()
+	width = base_style.get_shape().as_list()
+	channels = base_style.get_shape().as_list()
+	gram_style = gram_matrix(base_style)
+	result = tf.reduce_mean(tf.square(gram_style - gram_target))
+
+	return result
+
+def feature_rep(model, content_path, style_path):
+
+	content_image = load_and_process_img(content_path)
+	style_image = load_and_process_img(style_path)
+
+	style_outputs = model(style_image)
+	content_outputs = model(content_image)
+
+	style_features = [style_layer[0] for style_layer in style_outputs[:num_style_layers]]
+	content_features = [content_layer[0] for content_layer in content_outputs[num_style_layers:]]
+
+	return style_features
+	return content_features
+
+def 
+
 
 
 
