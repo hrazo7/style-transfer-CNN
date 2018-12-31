@@ -2,12 +2,114 @@ import numpy as np
 import time
 from PIL import Image
 from keras import backend as k
-from keras.preprocessing.image import load_img, img_to_array
-from keras.applications import VGG16
-from keras.applications.vgg16 import preprocess_input
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
 from keras.layers import Input
 from scipy.optimize import fmin_l_bfgs_b
 
+content_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/content_pics/me.jpg')
+style_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/style_pics/obama.jpeg')
+result_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/result_pics/result.jpeg')
+
+
+def load_img(path):
+
+	max dim = 512
+	img = Image.open(path)
+	long = max(img.size)
+	scale = max.dim / long
+	img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.ANTIALIAS)
+	img = kp_image.img_to_array(img)
+	img = np.expand_dims(img, axis=0)
+	
+	return img
+
+def load_and_process_img(path):
+	img = load_img(path)
+	img = tf.keras.applications.vgg19.preprocess_input(img)
+	
+	return img
+
+def deprocess_img(processed_img):
+
+	x = processed_img.copy()
+	if len(x.shape) == 4:
+		
+		x = np.squeeze(x, O)
+	assert len(x.shape) == 3, ('what do I put here?')
+
+	if len(x.shape) != 3:
+
+		raise valueError("Invalid input")
+
+	x[:, :, 0] += 103.939
+	x[:, :, 1] += 116.779
+	x[:, : 2] += 123.68
+	x = x[:, :, ::-1]
+
+	x = np.clip(x, 0, 255).astype('uint8')
+
+	return x
+
+content_layers = ['block4_conv2']
+style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
+
+num_content_layers = len(content_layers)
+num_style_layers = len(style_layers)
+
+def get_model():
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
 #set paths for images 
 source_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/source_pics/me.jpg')
 style_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/style_pics/obama.jpeg')
@@ -171,4 +273,17 @@ print('image saved')
 end = time.time()
 
 print('Time take: {}'.format(end-start))
+'''
+
+
+
+
+
+
+
+
+
+
+
+
 
