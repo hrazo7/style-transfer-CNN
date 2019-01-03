@@ -6,6 +6,8 @@ import tensorflow.contrib.eager as tfe
 from tensorflow.python.keras import models 
 from tensorflow.python.keras import losses
 from tensorflow.python.keras import layers
+from tensorflow.python.keras.preprocessing import image as kp_image
+
 from PIL import Image
 from keras import backend as k
 from keras.preprocessing.image import load_img
@@ -20,10 +22,10 @@ result_path = ('/Users/hernanrazo/pythonProjects/style_transfer_CNN/result_pics/
 
 def load_img(path):
 
-	max dim = 512
+	max_dim = 512
 	img = Image.open(path)
 	long = max(img.size)
-	scale = max.dim / long
+	scale = max_dim / long
 	img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.ANTIALIAS)
 	img = kp_image.img_to_array(img)
 	img = np.expand_dims(img, axis=0)
@@ -58,17 +60,21 @@ def deprocess_img(processed_img):
 	return x
 
 content_layers = ['block4_conv2']
-style_layers = ['block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
+style_layers = ['block1_conv1', 
+'block2_conv1', 
+'block3_conv1', 
+'block4_conv1', 
+'block5_conv1']
 
 num_content_layers = len(content_layers)
 num_style_layers = len(style_layers)
 
 def get_model():
 
-	vgg = tf.keras.applications.vgg19.VGG19(include_top=false, weights='imagenet')
-	vgg.trainable = false
-	style_outputs = [vgg.get_layers(name).output for name in style_layers]
-	content_outputs = [vgg.get_layer(name).outputs for name in content_layers]
+	vgg = tf.keras.applications.vgg19.VGG19(include_top=False, weights='imagenet')
+	vgg.trainable = False	
+	style_outputs = [vgg.get_layer(name).output for name in style_layers]
+	content_outputs = [vgg.get_layer(name).output for name in content_layers]
 	model_outputs = style_outputs + content_outputs
 
 	return models.Model(vgg.input, model_outputs)
@@ -81,7 +87,7 @@ def content_loss(base_content, target):
 
 def gram_matrix(input_tensor):
 
-	channels = int(input_tensor.shape[-1])
+	channels = np.array(input_tensor.shape[-1])
 	a = tf.reshape(input_tensor, [-1, channels])
 	n = tf.shape(a)[0]
 	gram = tf.matmul(a, a, transpose_a = True)
@@ -113,54 +119,87 @@ def feature_rep(model, content_path, style_path):
 	return style_features
 	return content_features
 
-def 
+def  calculate_loss (model, loss_weights, init_image, gram_style_features, content_features):
+
+	style_weight = loss_weights
+	content_weight = loss_weights
+	total_variation_weight = loss_weights
+
+	model_outputs = model(init_image)
+
+	style_output_features = model_outputs[:num_style_layers]
+	content_output_features = model_outputs[num_style_layers:]
+
+	style_score = 0
+	content_score = 0
+
+	weight_per_style_layer = 1.0 / float(num_style_layers)
+
+	for target_content, comb_content in zip(content_features, content_output_features):
+		style_score += weight_per_style_layer * style_loss(comb_content[0], target_style)
+	
+	weight_per_content_layer = 1.0 / float(num_content_layers)
+
+	for target_content, comb_content in zip(content_features, content_output_features):
+		content_score += weight_per_content_layer * content_loss(comb_content[0], target_content)
+
+	style_score += style_weight
+	content_score += content_weight
+	total_variation_score = total_variation_weight * total_variation_loss(init_image)
+
+	total_loss = style_score + content_score + total_variation_score
+
+	return total_loss
+	return style_score
+	return content_score
+	return total_variation_score
+
+def calculate_gradients(cfg):
+
+	with tf.GradientTape() as tape:
+
+		all_loss = calculate_loss(**cfg)
+
+	total_loss = all_loss[0]
+
+	return tape.gradient(total_loss, cfg['init_image'])
+	return all_loss
+
+def run_style_transfer(content_path, 
+	style_path, 
+	num_iteration=1000, 
+	content_weight=1e3, 
+	style_weight=1e-2):
+
+	display_num = 100
+	model = get_model()
+
+	for layer in model.layers:
+		layer.trainable = False
+
+	style_features = feature_rep(model, content_path, style_path)
+	content_features = feature_rep(model, content_path, style_path)
+	gram_style_features = [gram_matrix(style_features) for style_feature in style_features]
+
+	init_image = load_and_process_img(content_path)
+	init_image = tfe.Variable(init_image, dtype=tf.float32)
+
+	optimizer = tf.train.AdamOptimizer(learning_rate=10.0)
+
+	iter_count = 1
+
+	best_loss = float('inf'), None
+	best_img = float('inf'), None
+
+	print('Total time: {:.4f}s'.format(time.time() - global_start))
+
+	best_img = img.save(result_path)
+	return best_img
+	return best_loss
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+best = run_style_transfer(content_path, style_path)
+best_loss = run_style_transfer(content_path, style_path)
 
 
 
